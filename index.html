@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chopsticks – Finger Game</title>
+  <meta name="description" content="Play Chopsticks, the classic finger-counting strategy game, in your browser." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+<div id="app">
+
+  <!-- ══════════════════════ MENU ══════════════════════ -->
+  <div id="screen-menu" class="screen active">
+    <div class="menu-bg">
+      <div class="particle" style="--x:10%;--y:20%;--s:6px;--d:3s"></div>
+      <div class="particle" style="--x:80%;--y:65%;--s:4px;--d:5s"></div>
+      <div class="particle" style="--x:55%;--y:80%;--s:8px;--d:4s"></div>
+      <div class="particle" style="--x:25%;--y:45%;--s:5px;--d:6s"></div>
+      <div class="particle" style="--x:70%;--y:15%;--s:7px;--d:3.5s"></div>
+    </div>
+    <div class="menu-content">
+      <div class="game-logo">
+        <div class="logo-hands">
+          <span class="logo-hand">✋</span>
+          <span class="logo-x">✕</span>
+          <span class="logo-hand">🤚</span>
+        </div>
+        <h1 class="logo-title">CHOPSTICKS</h1>
+        <p class="logo-subtitle">The Finger Strategy Game</p>
+      </div>
+      <div class="menu-buttons">
+        <button id="btn-pvp" class="btn btn-primary btn-lg" onclick="window.startGame()">
+          <span class="btn-icon">⚔️</span>
+          <span class="btn-text">
+            <span class="btn-main-text">Play Game</span>
+            <span class="btn-sub-text">2 Players — local</span>
+          </span>
+        </button>
+        <button class="btn btn-secondary btn-lg" onclick="window.showRules()">
+          <span class="btn-icon">📖</span>
+          <span class="btn-text">
+            <span class="btn-main-text">How to Play</span>
+            <span class="btn-sub-text">Rules & guide</span>
+          </span>
+        </button>
+      </div>
+      <div class="menu-stats" id="menu-stats"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ RULES ══════════════════════ -->
+  <div id="screen-rules" class="screen">
+    <div class="rules-panel">
+      <button class="btn-back" onclick="window.showMenu()">← Back</button>
+      <h2 class="rules-title">How to Play</h2>
+      <div class="rules-grid">
+        <div class="rule-card">
+          <div class="rule-icon">🖐️</div>
+          <h3>Start</h3>
+          <p>Both players start with <strong>1 finger</strong> on each hand.</p>
+        </div>
+        <div class="rule-card">
+          <div class="rule-icon">⚔️</div>
+          <h3>Attack</h3>
+          <p>Pick your hand, then tap the opponent's hand to add fingers.</p>
+        </div>
+        <div class="rule-card">
+          <div class="rule-icon">🔄</div>
+          <h3>Split</h3>
+          <p>Move fingers between your hands. Both hands must be alive. Source needs ≥ 2 fingers.</p>
+        </div>
+        <div class="rule-card">
+          <div class="rule-icon">💀</div>
+          <h3>Death</h3>
+          <p>A hand reaching 5+ fingers <strong>dies</strong>. Lose both hands = <strong>Game Over</strong>.</p>
+        </div>
+      </div>
+      <div class="rules-example">
+        <h3>Example</h3>
+        <div class="example-sequence">
+          <div class="ex-step"><span class="ex-badge">1</span>You: L=2, R=1</div>
+          <div class="ex-arrow">→</div>
+          <div class="ex-step"><span class="ex-badge">2</span>Attack with Left(2) onto opponent's Right(3)</div>
+          <div class="ex-arrow">→</div>
+          <div class="ex-step"><span class="ex-badge">3</span>Opponent Right = 5 → <strong>💀 DEAD</strong></div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="window.startGame()" style="margin-top:0.5rem;">
+        ▶ Start Game
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ GAME ══════════════════════ -->
+  <div id="screen-game" class="screen">
+
+    <!-- Header bar -->
+    <div class="game-header">
+      <button class="btn-back small" onclick="window.showMenu()">← Menu</button>
+
+      <div class="turn-badge" id="turn-badge">
+        <div class="turn-dot"></div>
+        <div class="turn-text" id="turn-text"><span>Turn of</span> Player 1</div>
+      </div>
+
+      <button class="btn-undo" id="btn-undo" onclick="window.undoMove()" disabled>↩ Undo</button>
+    </div>
+
+    <!-- Player 2 zone (top) -->
+    <div class="player-zone player-zone-top" id="zone-p2">
+      <div class="zone-header">
+        <div class="player-name-tag">
+          <div class="player-pip p2-pip"></div>
+          <span>Player 2</span>
+        </div>
+        <div class="your-turn-badge p2" id="p2-turn-badge">YOUR TURN</div>
+      </div>
+      <div class="hands-area">
+        <!-- P2 Left -->
+        <div class="hand-wrapper" id="hand-p2-left" data-player="2" data-hand="left">
+          <div class="finger-dots" id="dots-p2-left"></div>
+          <div class="hand-svg-wrap" id="svg-p2-left"></div>
+          <div class="finger-chip" id="chip-p2-left">1</div>
+          <div class="hand-label">Left</div>
+        </div>
+        <!-- P2 Right -->
+        <div class="hand-wrapper" id="hand-p2-right" data-player="2" data-hand="right">
+          <div class="finger-dots" id="dots-p2-right"></div>
+          <div class="hand-svg-wrap" id="svg-p2-right"></div>
+          <div class="finger-chip" id="chip-p2-right">1</div>
+          <div class="hand-label">Right</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action center -->
+    <div class="action-center" id="action-center">
+      <div class="flow-arrow" id="flow-arrow">↕</div>
+      <!-- Step card injected by JS -->
+    </div>
+
+    <!-- Player 1 zone (bottom) -->
+    <div class="player-zone player-zone-bottom" id="zone-p1">
+      <div class="hands-area">
+        <!-- P1 Left -->
+        <div class="hand-wrapper" id="hand-p1-left" data-player="1" data-hand="left">
+          <div class="hand-label">Left</div>
+          <div class="finger-chip" id="chip-p1-left">1</div>
+          <div class="hand-svg-wrap" id="svg-p1-left"></div>
+          <div class="finger-dots" id="dots-p1-left"></div>
+        </div>
+        <!-- P1 Right -->
+        <div class="hand-wrapper" id="hand-p1-right" data-player="1" data-hand="right">
+          <div class="hand-label">Right</div>
+          <div class="finger-chip" id="chip-p1-right">1</div>
+          <div class="hand-svg-wrap" id="svg-p1-right"></div>
+          <div class="finger-dots" id="dots-p1-right"></div>
+        </div>
+      </div>
+      <div class="zone-header">
+        <div class="your-turn-badge p1" id="p1-turn-badge">YOUR TURN</div>
+        <div class="player-name-tag" style="margin-left:auto">
+          <span>Player 1</span>
+          <div class="player-pip p1-pip"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ GAME OVER ══════════════════════ -->
+  <div id="screen-gameover" class="screen">
+    <div class="gameover-content">
+      <div class="fireworks" id="fireworks"></div>
+      <span class="trophy-icon" id="trophy-icon">🏆</span>
+      <h2 class="gameover-title" id="gameover-title">Player 1 Wins!</h2>
+      <p class="gameover-subtitle" id="gameover-subtitle">Congratulations!</p>
+      <div class="gameover-stats" id="gameover-stats"></div>
+      <div class="gameover-buttons">
+        <button class="btn btn-primary btn-lg" onclick="window.startGame()">
+          <span class="btn-icon">🔄</span>
+          <span class="btn-text"><span class="btn-main-text">Play Again</span></span>
+        </button>
+        <button class="btn btn-secondary" onclick="window.showMenu()" style="justify-content:center;">
+          ← Main Menu
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ SPLIT MODAL ══════════════════════ -->
+  <div id="split-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="modal-handle"></div>
+      <h3 class="modal-title">🔄 Split Fingers</h3>
+      <p class="modal-desc">Transfer fingers between your hands. Choose how many to move:</p>
+      <div class="modal-current-state" id="modal-current-state"></div>
+      <div class="split-options" id="split-options"></div>
+      <button class="btn btn-ghost" onclick="window.closeSplitModal()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Toasts -->
+  <div id="toast-container"></div>
+
+</div>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
